@@ -156,7 +156,7 @@ pipeline {
         string(name: 'PROD_FRONTEND_BUCKET', defaultValue: 'gpa-management-prod-frontend-813935521170-ap-southeast-1-an', description: 'Production frontend S3 bucket')
         string(name: 'PROD_UPLOAD_BUCKET', defaultValue: 'gpa-management-shared-uploads-813935521170-ap-southeast-1-an', description: 'Production upload S3 bucket')
         string(name: 'PROD_UPLOAD_ASSETS_DOMAIN', defaultValue: 'https://gpa-management-shared-uploads-813935521170-ap-southeast-1-an.s3.ap-southeast-1.amazonaws.com', description: 'Production upload public base URL')
-        string(name: 'PROD_CLOUDFRONT_DISTRIBUTION_ID', defaultValue: '', description: 'Production frontend CloudFront distribution ID, fill after production CloudFront exists')
+        string(name: 'PROD_CLOUDFRONT_DISTRIBUTION_ID', defaultValue: 'EEU2J9BQJ0VDT', description: 'Production frontend CloudFront distribution ID')
     }
 
     stages {
