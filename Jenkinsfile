@@ -1,15 +1,36 @@
 // GPA Management AWS/EKS Pipeline
-// Staging: branch staging or DEPLOY_ENV=staging
-// Production: branch main, git tag v*, or DEPLOY_ENV=prod, with manual approval
+// Staging: branch staging, DEPLOY_ENV=auto or DEPLOY_ENV=staging
+// Production: branch main/tag v*, DEPLOY_ENV=auto or DEPLOY_ENV=prod, with manual approval
+
+def currentBranch() {
+    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
+    return branch.replaceFirst(/^origin\//, '')
+}
 
 def inferEnvironment() {
     if (env.TAG_NAME?.startsWith('v')) {
         return 'prod'
     }
-    if (env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main') {
+    if (currentBranch() == 'main') {
         return 'prod'
     }
     return 'staging'
+}
+
+def validateBranchEnvironment(String deployEnv) {
+    def branch = currentBranch()
+
+    if (env.TAG_NAME?.startsWith('v') && deployEnv != 'prod') {
+        error("Invalid deployment target: tag ${env.TAG_NAME} can only deploy prod, got ${deployEnv}.")
+    }
+
+    if (branch == 'staging' && deployEnv != 'staging') {
+        error("Invalid deployment target: branch staging can only deploy staging, got ${deployEnv}.")
+    }
+
+    if (branch == 'main' && deployEnv != 'prod') {
+        error("Invalid deployment target: branch main can only deploy prod, got ${deployEnv}.")
+    }
 }
 
 def cfgValue(String key, String defaultValue = '') {
@@ -117,7 +138,7 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'DEPLOY_ENV', choices: ['staging', 'prod'], description: 'staging deploys staging; prod deploys production with manual approval')
+        choice(name: 'DEPLOY_ENV', choices: ['auto', 'staging', 'prod'], description: 'auto maps staging branch to staging and main/tag to prod')
         string(name: 'AWS_REGION', defaultValue: 'ap-southeast-1', description: 'AWS region')
         string(name: 'AWS_ACCOUNT_ID', defaultValue: '813935521170', description: 'AWS account ID')
         string(name: 'DOMAIN_NAME', defaultValue: 'nghiemquocanh.me', description: 'Root domain')
@@ -142,7 +163,12 @@ pipeline {
         stage('Resolve Environment') {
             steps {
                 script {
-                    DEPLOY_TARGET = cfgValue('DEPLOY_ENV', inferEnvironment())
+                    DEPLOY_TARGET = cfgValue('DEPLOY_ENV', 'auto')
+                    if (DEPLOY_TARGET == 'auto') {
+                        DEPLOY_TARGET = inferEnvironment()
+                    }
+                    validateBranchEnvironment(DEPLOY_TARGET)
+
                     AWS_REGION_VALUE = cfgValue('AWS_REGION', 'ap-southeast-1')
                     AWS_ACCOUNT_ID_VALUE = cfgValue('AWS_ACCOUNT_ID')
                     DOMAIN_NAME_VALUE = cfgValue('DOMAIN_NAME')
@@ -160,6 +186,7 @@ pipeline {
                     requireEnv("${CFG.name.toUpperCase()}_CLOUDFRONT_DISTRIBUTION_ID", CFG.cloudfrontId)
 
                     echo """
+                    Branch: ${currentBranch()}
                     Deploy environment: ${CFG.name}
                     Namespace: ${CFG.namespace}
                     API URL: ${CFG.apiUrl}
