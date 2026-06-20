@@ -5,12 +5,18 @@ function generateCsrfToken() {
 }
 
 function getCsrfCookieOptions() {
-  return {
+  const options = {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
   };
+
+  if (process.env.COOKIE_DOMAIN) {
+    options.domain = process.env.COOKIE_DOMAIN;
+  }
+
+  return options;
 }
 
 function requireCsrfToken(req, res, next) {

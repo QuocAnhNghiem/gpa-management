@@ -45,6 +45,26 @@ describe('Auth API', () => {
       expect(cookies.some((cookie) => cookie.includes('csrfToken='))).toBe(true);
     });
 
+    it('should apply COOKIE_DOMAIN to csrf cookie for cross-subdomain deployments', async () => {
+      const originalCookieDomain = process.env.COOKIE_DOMAIN;
+      process.env.COOKIE_DOMAIN = '.example.com';
+
+      try {
+        const res = await request(app)
+          .post('/api/auth/register')
+          .send({ ...userPayload, email: 'domain-cookie@example.com' });
+
+        const cookies = res.headers['set-cookie'];
+        expect(cookies.find((cookie) => cookie.startsWith('csrfToken='))).toContain('Domain=.example.com');
+      } finally {
+        if (originalCookieDomain === undefined) {
+          delete process.env.COOKIE_DOMAIN;
+        } else {
+          process.env.COOKIE_DOMAIN = originalCookieDomain;
+        }
+      }
+    });
+
     it('should fail if email already exists', async () => {
       await request(app).post('/api/auth/register').send(userPayload);
       const res = await request(app).post('/api/auth/register').send(userPayload);

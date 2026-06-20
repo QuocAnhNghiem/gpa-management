@@ -12,6 +12,7 @@ data:
   GOOGLE_OAUTH_ENABLED: "false"
   PORT: "5000"
   FRONTEND_URL: "https://app.<your-domain>"
+  COOKIE_DOMAIN: ".<your-domain>"
   AWS_REGION: "ap-southeast-1"
   S3_BUCKET_NAME: "<prod-upload-bucket-name>"
   S3_UPLOAD_BUCKET: "<prod-upload-bucket-name>"
