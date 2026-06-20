@@ -1,4 +1,5 @@
 # Environment and secrets
+*.md
 .env
 .env.*
 !.env.example
