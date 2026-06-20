@@ -2,12 +2,6 @@
 // Staging: branch staging or DEPLOY_ENV=staging
 // Production: branch main, git tag v*, or DEPLOY_ENV=prod, with manual approval
 
-NODEJS_TOOL = env.NODEJS_TOOL ?: 'system'
-AWS_REGION = env.AWS_REGION ?: 'ap-southeast-1'
-PROJECT_NAME = env.PROJECT_NAME ?: 'gpa-management'
-EKS_CLUSTER_NAME = env.EKS_CLUSTER_NAME ?: 'gpa-management'
-DEPLOY_ENV = env.DEPLOY_ENV ?: inferEnvironment()
-
 def inferEnvironment() {
     if (env.TAG_NAME?.startsWith('v')) {
         return 'prod'
@@ -18,17 +12,31 @@ def inferEnvironment() {
     return 'staging'
 }
 
+def cfgValue(String key, String defaultValue = '') {
+    def paramValue = params[key]
+    if (paramValue != null && "${paramValue}".trim()) {
+        return "${paramValue}".trim()
+    }
+
+    def envValue = env[key]
+    if (envValue != null && "${envValue}".trim()) {
+        return "${envValue}".trim()
+    }
+
+    return defaultValue
+}
+
 def envConfig(String deployEnv) {
     if (deployEnv == 'prod' || deployEnv == 'production') {
         return [
             name: 'prod',
             namespace: 'gpa-prod',
-            apiUrl: env.PROD_API_URL,
-            viteApiUrl: env.PROD_API_URL,
-            frontendBucket: env.PROD_FRONTEND_BUCKET,
-            uploadBucket: env.PROD_UPLOAD_BUCKET,
-            uploadAssetsDomain: env.PROD_UPLOAD_ASSETS_DOMAIN,
-            cloudfrontId: env.PROD_CLOUDFRONT_DISTRIBUTION_ID,
+            apiUrl: cfgValue('PROD_API_URL'),
+            viteApiUrl: cfgValue('PROD_API_URL'),
+            frontendBucket: cfgValue('PROD_FRONTEND_BUCKET'),
+            uploadBucket: cfgValue('PROD_UPLOAD_BUCKET'),
+            uploadAssetsDomain: cfgValue('PROD_UPLOAD_ASSETS_DOMAIN'),
+            cloudfrontId: cfgValue('PROD_CLOUDFRONT_DISTRIBUTION_ID'),
             imageTag: env.TAG_NAME ?: env.GIT_COMMIT,
             scanExitCode: '1'
         ]
@@ -37,24 +45,26 @@ def envConfig(String deployEnv) {
     return [
         name: 'staging',
         namespace: 'gpa-staging',
-        apiUrl: env.STAGING_API_URL,
-        viteApiUrl: env.STAGING_API_URL,
-        frontendBucket: env.STAGING_FRONTEND_BUCKET,
-        uploadBucket: env.STAGING_UPLOAD_BUCKET,
-        uploadAssetsDomain: env.STAGING_UPLOAD_ASSETS_DOMAIN,
-        cloudfrontId: env.STAGING_CLOUDFRONT_DISTRIBUTION_ID,
+        apiUrl: cfgValue('STAGING_API_URL'),
+        viteApiUrl: cfgValue('STAGING_API_URL'),
+        frontendBucket: cfgValue('STAGING_FRONTEND_BUCKET'),
+        uploadBucket: cfgValue('STAGING_UPLOAD_BUCKET'),
+        uploadAssetsDomain: cfgValue('STAGING_UPLOAD_ASSETS_DOMAIN'),
+        cloudfrontId: cfgValue('STAGING_CLOUDFRONT_DISTRIBUTION_ID'),
         imageTag: env.GIT_COMMIT?.take(12) ?: env.BUILD_NUMBER,
         scanExitCode: '0'
     ]
 }
 
 def withNodeTool(Closure body) {
-    if (NODEJS_TOOL == 'system') {
+    def nodejsTool = cfgValue('NODEJS_TOOL', 'system')
+
+    if (nodejsTool == 'system') {
         body()
         return
     }
 
-    def nodeHome = tool name: NODEJS_TOOL, type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+    def nodeHome = tool name: nodejsTool, type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
     withEnv(["PATH=${nodeHome}/bin:${env.PATH}"]) {
         body()
     }
@@ -106,20 +116,43 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
-    environment {
-        AWS_REGION = "${AWS_REGION}"
-        PROJECT_NAME = "${PROJECT_NAME}"
-        EKS_CLUSTER_NAME = "${EKS_CLUSTER_NAME}"
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['staging', 'prod'], description: 'staging deploys staging; prod deploys production with manual approval')
+        string(name: 'AWS_REGION', defaultValue: 'ap-southeast-1', description: 'AWS region')
+        string(name: 'AWS_ACCOUNT_ID', defaultValue: '813935521170', description: 'AWS account ID')
+        string(name: 'DOMAIN_NAME', defaultValue: 'nghiemquocanh.me', description: 'Root domain')
+        string(name: 'EKS_CLUSTER_NAME', defaultValue: 'gpa-management', description: 'EKS cluster name')
+        string(name: 'ECR_REPO', defaultValue: '813935521170.dkr.ecr.ap-southeast-1.amazonaws.com/gpa-management-backend', description: 'Backend ECR repo URL')
+        string(name: 'NODEJS_TOOL', defaultValue: 'system', description: 'Use system Node.js installed on Jenkins EC2')
+
+        string(name: 'STAGING_API_URL', defaultValue: 'https://staging-api.nghiemquocanh.me', description: 'Staging API URL')
+        string(name: 'STAGING_FRONTEND_BUCKET', defaultValue: 'gpa-management-staging-frontend-813935521170-ap-southeast-1-an', description: 'Staging frontend S3 bucket')
+        string(name: 'STAGING_UPLOAD_BUCKET', defaultValue: 'gpa-management-shared-uploads-813935521170-ap-southeast-1-an', description: 'Staging upload S3 bucket')
+        string(name: 'STAGING_UPLOAD_ASSETS_DOMAIN', defaultValue: 'https://gpa-management-shared-uploads-813935521170-ap-southeast-1-an.s3.ap-southeast-1.amazonaws.com', description: 'Staging upload public base URL')
+        string(name: 'STAGING_CLOUDFRONT_DISTRIBUTION_ID', defaultValue: 'E2C8SH021V74FV', description: 'Staging frontend CloudFront distribution ID')
+
+        string(name: 'PROD_API_URL', defaultValue: 'https://api.nghiemquocanh.me', description: 'Production API URL')
+        string(name: 'PROD_FRONTEND_BUCKET', defaultValue: 'gpa-management-prod-frontend-813935521170-ap-southeast-1-an', description: 'Production frontend S3 bucket')
+        string(name: 'PROD_UPLOAD_BUCKET', defaultValue: 'gpa-management-shared-uploads-813935521170-ap-southeast-1-an', description: 'Production upload S3 bucket')
+        string(name: 'PROD_UPLOAD_ASSETS_DOMAIN', defaultValue: 'https://gpa-management-shared-uploads-813935521170-ap-southeast-1-an.s3.ap-southeast-1.amazonaws.com', description: 'Production upload public base URL')
+        string(name: 'PROD_CLOUDFRONT_DISTRIBUTION_ID', defaultValue: '', description: 'Production frontend CloudFront distribution ID, fill after production CloudFront exists')
     }
 
     stages {
         stage('Resolve Environment') {
             steps {
                 script {
-                    CFG = envConfig(DEPLOY_ENV)
-                    requireEnv('ECR_REPO', env.ECR_REPO)
-                    requireEnv('AWS_ACCOUNT_ID', env.AWS_ACCOUNT_ID)
-                    requireEnv('DOMAIN_NAME', env.DOMAIN_NAME)
+                    DEPLOY_TARGET = cfgValue('DEPLOY_ENV', inferEnvironment())
+                    AWS_REGION_VALUE = cfgValue('AWS_REGION', 'ap-southeast-1')
+                    AWS_ACCOUNT_ID_VALUE = cfgValue('AWS_ACCOUNT_ID')
+                    DOMAIN_NAME_VALUE = cfgValue('DOMAIN_NAME')
+                    ECR_REPO_VALUE = cfgValue('ECR_REPO')
+                    EKS_CLUSTER_NAME_VALUE = cfgValue('EKS_CLUSTER_NAME', 'gpa-management')
+
+                    CFG = envConfig(DEPLOY_TARGET)
+                    requireEnv('ECR_REPO', ECR_REPO_VALUE)
+                    requireEnv('AWS_ACCOUNT_ID', AWS_ACCOUNT_ID_VALUE)
+                    requireEnv('DOMAIN_NAME', DOMAIN_NAME_VALUE)
                     requireEnv("${CFG.name.toUpperCase()}_API_URL", CFG.apiUrl)
                     requireEnv("${CFG.name.toUpperCase()}_FRONTEND_BUCKET", CFG.frontendBucket)
                     requireEnv("${CFG.name.toUpperCase()}_UPLOAD_BUCKET", CFG.uploadBucket)
@@ -175,10 +208,10 @@ pipeline {
         stage('Push Backend Image to ECR') {
             steps {
                 sh """
-                    REGISTRY='${env.AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com'
-                    aws ecr get-login-password --region '${AWS_REGION}' | docker login --username AWS --password-stdin "\$REGISTRY"
-                    docker tag 'gpa-backend:${CFG.imageTag}' '${env.ECR_REPO}:${CFG.imageTag}'
-                    docker push '${env.ECR_REPO}:${CFG.imageTag}'
+                    REGISTRY='${AWS_ACCOUNT_ID_VALUE}.dkr.ecr.${AWS_REGION_VALUE}.amazonaws.com'
+                    aws ecr get-login-password --region '${AWS_REGION_VALUE}' | docker login --username AWS --password-stdin "\$REGISTRY"
+                    docker tag 'gpa-backend:${CFG.imageTag}' '${ECR_REPO_VALUE}:${CFG.imageTag}'
+                    docker push '${ECR_REPO_VALUE}:${CFG.imageTag}'
                 """
             }
         }
@@ -197,12 +230,12 @@ pipeline {
                 sh """
                     mkdir -p "\$WORKSPACE/.kube"
                     export KUBECONFIG="\$WORKSPACE/.kube/config"
-                    aws eks update-kubeconfig --name '${EKS_CLUSTER_NAME}' --region '${AWS_REGION}'
+                    aws eks update-kubeconfig --name '${EKS_CLUSTER_NAME_VALUE}' --region '${AWS_REGION_VALUE}'
                     ENVIRONMENT='${CFG.name}' \
-                    ECR_REPO='${env.ECR_REPO}' \
+                    ECR_REPO='${ECR_REPO_VALUE}' \
                     IMAGE_TAG='${CFG.imageTag}' \
-                    AWS_ACCOUNT_ID='${env.AWS_ACCOUNT_ID}' \
-                    DOMAIN_NAME='${env.DOMAIN_NAME}' \
+                    AWS_ACCOUNT_ID='${AWS_ACCOUNT_ID_VALUE}' \
+                    DOMAIN_NAME='${DOMAIN_NAME_VALUE}' \
                     UPLOAD_BUCKET='${CFG.uploadBucket}' \
                     UPLOAD_ASSETS_DOMAIN='${CFG.uploadAssetsDomain}' \
                     scripts/deploy/deploy-k8s.sh
