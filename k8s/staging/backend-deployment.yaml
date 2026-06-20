@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpa-backend
+  namespace: gpa-staging
+  labels:
+    app.kubernetes.io/name: gpa-backend
+    app.kubernetes.io/part-of: gpa-management
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gpa-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gpa-backend
+        app.kubernetes.io/part-of: gpa-management
+    spec:
+      serviceAccountName: gpa-backend-sa
+      containers:
+        - name: gpa-backend
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-southeast-1.amazonaws.com/gpa-management-backend:<GIT_SHA>
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: gpa-backend-config
+            - secretRef:
+                name: gpa-backend-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

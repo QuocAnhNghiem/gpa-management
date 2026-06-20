@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gpa-backend
+  namespace: gpa-staging
+  labels:
+    app.kubernetes.io/name: gpa-backend
+    app.kubernetes.io/part-of: gpa-management
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gpa-backend

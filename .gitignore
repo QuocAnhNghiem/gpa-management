@@ -1,0 +1,52 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.key
+kubeconfig*
+note.txt
+aws-cli.md
+config.json
+api-config.json
+updated-config.json
+updated-api-config.json
+route53-changes.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Builds and coverage
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Terraform local state
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.agents/
+get-pip.py
+
+# Python/venv
+venv/
+__pycache__/
+*.pyc
+
+# Local uploads
+source/backend/public/uploads/

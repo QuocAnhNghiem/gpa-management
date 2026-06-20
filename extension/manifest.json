@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "GPA Management - USTH ERP Sync",
+  "version": "0.1.0",
+  "description": "Đồng bộ bảng điểm và thời khóa biểu từ USTH ERP vào GPA Management.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": [
+    "https://erp.usth.edu.vn/students/learn/timetable*",
+    "https://erp.usth.edu.vn/students/learn/personal-transcript*",
+    "http://localhost:5000/*",
+    "http://127.0.0.1:5000/*",
+    "https://*/api/integrations/usth-erp/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://erp.usth.edu.vn/students/learn/timetable*",
+        "https://erp.usth.edu.vn/students/learn/personal-transcript*"
+      ],
+      "js": [
+        "src/content/normalizer.js",
+        "src/content/transcriptScraper.js",
+        "src/content/timetableScraper.js",
+        "src/content/usthDetector.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html"
+  }
+}

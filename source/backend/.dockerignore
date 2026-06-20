@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.production.example
+node_modules
+npm-debug.log*
+coverage
+.nyc_output
+public/uploads
+Dockerfile
+.dockerignore
+tests
+*.test.js

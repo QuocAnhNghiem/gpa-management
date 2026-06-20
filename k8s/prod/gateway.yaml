@@ -1,0 +1,23 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gpa-gateway
+  namespace: gpa-prod
+  labels:
+    app.kubernetes.io/part-of: gpa-management
+    environment: production
+spec:
+  gatewayClassName: gpa-aws-alb
+  infrastructure:
+    parametersRef:
+      group: gateway.k8s.aws
+      kind: LoadBalancerConfiguration
+      name: gpa-alb-config
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: api.<your-domain>
+      allowedRoutes:
+        namespaces:
+          from: Same

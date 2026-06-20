@@ -1,0 +1,14 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gpa-backend
+  namespace: gpa-prod
+  labels:
+    app.kubernetes.io/name: gpa-backend
+    app.kubernetes.io/part-of: gpa-management
+    environment: production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gpa-backend

@@ -1,0 +1,13 @@
+project_name = "gpa-management"
+cluster_name = "gpa-management"
+aws_region   = "ap-southeast-1"
+
+# Replace after you get your real domain.
+domain_name    = "example.com"
+hosted_zone_id = "Z00000000000000000000"
+
+# Fill this after Kubernetes Gateway API creates the ALB.
+api_origin_domain_name = "example-alb.ap-southeast-1.elb.amazonaws.com"
+
+vpc_cidr = "10.20.0.0/16"
+azs      = ["ap-southeast-1a", "ap-southeast-1b"]

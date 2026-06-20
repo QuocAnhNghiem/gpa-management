@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./popup.css" />
+    <title>USTH ERP Sync</title>
+  </head>
+  <body>
+    <main class="popup">
+      <header>
+        <p class="eyebrow">GPA Management</p>
+        <h1>USTH ERP Sync</h1>
+        <p id="pageStatus" class="status">Đang kiểm tra tab ERP...</p>
+      </header>
+
+      <section class="panel">
+        <label>
+          GPA Backend URL
+          <input id="apiBaseUrl" type="text" placeholder="https://your-api-domain.com" />
+        </label>
+        <label class="token-label">
+          Extension Token
+          <textarea id="extensionToken" placeholder="Dán token lấy từ trang Đồng bộ ERP trong app GPA"></textarea>
+        </label>
+        <div class="token-actions">
+          <button id="saveTokenBtn" class="secondary">Lưu token GPA</button>
+          <button id="clearTokenBtn" class="secondary danger" type="button">Xóa token</button>
+        </div>
+      </section>
+
+      <section class="actions">
+        <button id="scanBtn">Quét trang hiện tại</button>
+        <button id="previewBtn" class="secondary" disabled>Xem preview</button>
+        <button id="syncBtn" class="primary" disabled>Đồng bộ vào GPA</button>
+      </section>
+
+      <section id="summary" class="summary hidden"></section>
+      <p id="message" class="message"></p>
+    </main>
+    <script src="./popup.js"></script>
+  </body>
+</html>

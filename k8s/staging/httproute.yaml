@@ -1,0 +1,26 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: gpa-api-route
+  namespace: gpa-staging
+  labels:
+    app.kubernetes.io/part-of: gpa-management
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: gpa-gateway
+      sectionName: http
+  hostnames:
+    - api.<your-domain>
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: gpa-backend
+          port: 5000
+          weight: 1

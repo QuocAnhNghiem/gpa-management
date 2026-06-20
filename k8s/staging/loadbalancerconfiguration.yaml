@@ -1,0 +1,14 @@
+apiVersion: gateway.k8s.aws/v1beta1
+kind: LoadBalancerConfiguration
+metadata:
+  name: gpa-alb-config
+  namespace: gpa-staging
+spec:
+  scheme: internet-facing
+  ipAddressType: ipv4
+  loadBalancerAttributes:
+    - key: deletion_protection.enabled
+      value: "false"
+  tags:
+    Project: gpa-management
+    Environment: staging
