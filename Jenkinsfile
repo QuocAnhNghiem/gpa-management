@@ -1,6 +1,6 @@
 // GPA Management AWS/EKS Pipeline
-// Staging: branch main/develop with DEPLOY_ENV=staging
-// Production: git tag v* or DEPLOY_ENV=prod, with manual approval
+// Staging: branch staging or DEPLOY_ENV=staging
+// Production: branch main, git tag v*, or DEPLOY_ENV=prod, with manual approval
 
 NODEJS_TOOL = env.NODEJS_TOOL ?: 'system'
 AWS_REGION = env.AWS_REGION ?: 'ap-southeast-1'
@@ -10,6 +10,9 @@ DEPLOY_ENV = env.DEPLOY_ENV ?: inferEnvironment()
 
 def inferEnvironment() {
     if (env.TAG_NAME?.startsWith('v')) {
+        return 'prod'
+    }
+    if (env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main') {
         return 'prod'
     }
     return 'staging'
