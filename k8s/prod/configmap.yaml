@@ -9,7 +9,7 @@ metadata:
 data:
   NODE_ENV: "production"
   APP_ENV: "production"
-  GOOGLE_OAUTH_ENABLED: "false"
+  GOOGLE_OAUTH_ENABLED: "true"
   PORT: "5000"
   FRONTEND_URL: "https://app.<your-domain>"
   COOKIE_DOMAIN: ".<your-domain>"

@@ -1,5 +1,7 @@
 # Environment and secrets
 *.md
+!README.md
+!docs/**/*.md
 .secrets/
 .env
 .env.*
@@ -15,6 +17,7 @@ api-config.json
 updated-config.json
 updated-api-config.json
 route53-changes.json
+ops/aws-runtime-json/*.json
 
 # Node
 node_modules/
